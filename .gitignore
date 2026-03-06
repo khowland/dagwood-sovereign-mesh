@@ -1,0 +1,62 @@
+# =====================================================================
+# SYSTEM: Dagwood Sovereign Mesh
+# COMPONENT: .gitignore
+# VECTOR: [St] Storage
+# DESCRIPTION: Prevents vault secrets and runtime data from being
+#              committed to version control. This is a zero-trust
+#              compliance requirement.
+#
+# SECURITY POLICY:
+#   - .dagwood_vault/ MUST be listed here — it contains real API keys
+#   - agent_data/ MUST be listed — it may contain session state with keys
+#   - *.env files MUST be excluded (use *.env.example pattern instead)
+# =====================================================================
+
+# === VAULT (CRITICAL — NEVER COMMIT) ===
+.dagwood_vault/
+*.env
+!*.env.example
+
+# === AGENT RUNTIME DATA ===
+agent_data/
+agent_zero_data/
+**/tmp/
+**/memory/
+**/chats/
+
+# === PYTHON ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# === DOCKER ===
+# Keep docker-compose.yaml but exclude overrides with secrets
+docker-compose.override.yaml
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === IDE ===
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# === LOGS ===
+*.log
+logs/
+
+# === DIAGNOSTICS ===
+# Debug output files (safe to ignore)
+*.txt
+!README*.txt

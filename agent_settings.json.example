@@ -1,0 +1,29 @@
+{
+    "_comment": "Copy to your agent framework's settings path. All api_base values must point to the mediator URL. See ARCHITECT.md for why this file is required.",
+    "_version": "1.0",
+
+    "chat_model_provider": "{{YOUR_PROVIDER_ALIAS}}",
+    "chat_model_name": "{{YOUR_CHAT_MODEL_NAME}}",
+    "chat_model_api_base": "http://dagwood-mediator:8080/v1",
+    "chat_model_vision": false,
+    "chat_model_kwargs": {},
+
+    "util_model_provider": "{{YOUR_PROVIDER_ALIAS}}",
+    "util_model_name": "{{YOUR_UTILITY_MODEL_NAME}}",
+    "util_model_api_base": "http://dagwood-mediator:8080/v1",
+    "util_model_kwargs": {},
+
+    "embed_model_provider": "{{YOUR_EMBED_PROVIDER}}",
+    "embed_model_name": "{{YOUR_EMBED_MODEL_NAME}}",
+    "embed_model_api_base": "http://dagwood-mediator:8080/v1",
+    "embed_model_kwargs": {},
+
+    "browser_model_provider": "{{YOUR_PROVIDER_ALIAS}}",
+    "browser_model_name": "{{YOUR_BROWSER_MODEL_NAME}}",
+    "browser_model_api_base": "http://dagwood-mediator:8080/v1",
+    "browser_model_vision": true,
+    "browser_model_kwargs": {},
+
+    "_note_api_keys": "API keys are NOT stored here. They live in the mediator vault only. Leave api_keys as empty object.",
+    "api_keys": {}
+}

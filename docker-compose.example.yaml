@@ -1,0 +1,104 @@
+# =====================================================================
+# SYSTEM: Dagwood Sovereign Mesh
+# COMPONENT: docker-compose.example.yaml
+# VECTOR: [Ac] Actuator / Orchestration
+# DESCRIPTION: Annotated configuration template. Replace all
+#              {{PLACEHOLDER}} values before use.
+#              This file is safe to commit to version control.
+#
+# ARCHITECTURE NOTES:
+#   - The mediator service has NO host port binding (zero-trust isolation)
+#   - The agent node only communicates with the mediator, never providers
+#   - Vault is mounted read-only into the mediator only
+#   - MESH_MANAGED_TOKEN is the static dummy key passed to the agent
+#
+# CHANGELOG:
+#   v1.0 - Initial template
+# VALIDATION: STAGE_3_PRODUCTION
+# =====================================================================
+services:
+
+  # ===================================================================
+  # [T] TRANSFORMER LAYER: Sovereign Mediator
+  # The only component that holds real API credentials.
+  # Internal-only — no host port mapping.
+  # ===================================================================
+  dagwood-mediator:
+    build:
+      context: .
+      dockerfile: Dockerfile.mediator
+    container_name: dagwood-mediator
+    restart: unless-stopped
+    env_file:
+      # [St] Path to your vault env file. Never commit the real file.
+      - ./.dagwood_vault/dagwood_stack.env
+    volumes:
+      # [St] Storage: Vault injected read-only. Mediator cannot write to it.
+      - ./.dagwood_vault/dagwood_stack.env:/app/.env:ro
+      # [T] Transformer: Mediator source mounted for hot-reload in dev.
+      #     Consider baking into image for production.
+      - ./dagwood_mediator.py:/app/dagwood_mediator.py:ro
+    networks:
+      - dagwood-mesh
+    # [SECURITY] No ports: block on host. Only reachable via dagwood-mesh.
+    # Uncomment below ONLY for temporary diagnostics, never in production:
+    # ports:
+    #   - "8080:8080"
+
+  # ===================================================================
+  # [Ac] ACTUATOR LAYER: AI Agent Node
+  # Holds only MESH_MANAGED_TOKEN — never real keys.
+  # Routes all LLM traffic to the mediator via api_base injection.
+  # ===================================================================
+  agent-node:
+    # Replace with your preferred agent framework image
+    image: {{YOUR_AGENT_IMAGE}}:latest
+    container_name: {{YOUR_AGENT_CONTAINER_NAME}}
+    depends_on:
+      - dagwood-mediator
+    environment:
+      # --- Network Binding ---
+      - HOST=0.0.0.0
+      - PORT=80
+
+      # --- [T] Mediator Routing ---
+      # All api_base vars point to the mediator. Providers are unreachable.
+      - OPENAI_API_BASE=http://dagwood-mediator:8080/v1
+      - OPENROUTER_API_BASE=http://dagwood-mediator:8080/v1
+      # Add additional framework-specific base URL vars here:
+      # - {{FRAMEWORK}}_API_BASE=http://dagwood-mediator:8080/v1
+
+      # =================================================================
+      # [SECURITY] ZERO-TRUST ENFORCEMENT
+      # VECTOR: [Lo] Logic / Credential Proxying
+      # POLICY: Static dummy tokens force all framework traffic through [T].
+      # The mediator ignores these entirely. Real keys are vault-only.
+      # =================================================================
+      - OPENAI_API_KEY=MESH_MANAGED_TOKEN
+      - OPENROUTER_API_KEY=MESH_MANAGED_TOKEN
+      # Add additional framework-specific key vars here as MESH_MANAGED_TOKEN
+
+    networks:
+      - dagwood-mesh
+    ports:
+      # External access to the agent UI
+      - "{{HOST_PORT}}:80"
+    volumes:
+      # Agent data persistence
+      - ./agent_data:/app/data
+      # ===============================================================
+      # [St] SETTINGS INJECTION — CRITICAL
+      # Pre-configured settings file that ensures api_base is always
+      # set to the mediator. Without this, frameworks default to empty
+      # api_base and bypass the mediator with MESH_MANAGED_TOKEN.
+      # ===============================================================
+      - ./agent_settings.json:/{{FRAMEWORK_SETTINGS_PATH}}/settings.json:ro
+    restart: unless-stopped
+
+networks:
+  dagwood-mesh:
+    driver: bridge
+    # Optional: add subnet config for strict IP range control
+    # ipam:
+    #   config:
+    #     - subnet: 172.20.0.0/16

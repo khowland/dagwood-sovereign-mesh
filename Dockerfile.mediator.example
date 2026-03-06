@@ -1,0 +1,38 @@
+# =====================================================================
+# SYSTEM: Dagwood Sovereign Mesh
+# COMPONENT: Dockerfile.mediator.example
+# VECTOR: [Ac] Actuator
+# DESCRIPTION: Container build spec for the sovereign mediator service.
+#              Installs only required dependencies. No dev tools included.
+#
+# CHANGELOG:
+#   v1.0 - Initial build spec
+# VALIDATION: STAGE_3_PRODUCTION
+# =====================================================================
+
+FROM python:3.12-slim
+
+# --- [St] Storage: Working Directory ---
+WORKDIR /app
+
+# --- [Ac] Actuator: Dependency Installation ---
+# Pin versions for reproducible builds in production
+RUN pip install --no-cache-dir \
+    fastapi==0.115.0 \
+    uvicorn[standard]==0.30.6 \
+    httpx==0.27.0 \
+    python-dotenv==1.0.1
+
+# --- [T] Transformer: Source Injection ---
+# Mediator source is volume-mounted read-only in production.
+# COPY is used here for standalone image builds.
+COPY dagwood_mediator.py /app/dagwood_mediator.py
+
+# --- [SECURITY] Non-root User ---
+# Run as unprivileged user to limit blast radius
+RUN useradd -r -s /bin/false mediator
+USER mediator
+
+# --- [η] Resonance: Startup ---
+EXPOSE 8080
+CMD ["python", "dagwood_mediator.py"]
